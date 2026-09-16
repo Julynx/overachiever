@@ -1,0 +1,36 @@
+{
+  "name": "achievements",
+  "version": "1.0.0",
+  "description": "OverAchiever - desktop achievements widget with an embedded LAN dashboard",
+  "productName": "OverAchiever",
+  "author": "OverAchiever",
+  "main": "dist/main/index.js",
+  "type": "module",
+  "scripts": {
+    "build:server": "tsc -p tsconfig.json",
+    "build:client": "esbuild src/client/widget/widget_controller.ts --bundle --outfile=public/js/widget.bundle.js --format=esm && esbuild src/client/dashboard/dashboard_controller.ts --bundle --outfile=public/js/dashboard.bundle.js --format=esm",
+    "build": "npm run build:server && npm run build:client",
+    "test": "tsx tests/integration.test.ts",
+    "icon": "node scripts/generate_app_icon.js",
+    "dist:win": "npm run build && electron-builder --win nsis",
+    "start": "electron .",
+    "dev": "npm run build && electron ."
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "multer": "^2.4.0",
+    "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.2.0",
+    "@types/node": "^26.5.1",
+    "@types/ws": "^8.18.1",
+    "electron": "^44.3.0",
+    "electron-builder": "^26.15.3",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  }
+}

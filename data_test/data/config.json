@@ -1,0 +1,7 @@
+{
+  "port": 3030,
+  "host": "0.0.0.0",
+  "launchOnStartup": false,
+  "maxVisibleCardsBeforeCollapse": 4,
+  "collapseHeightThresholdRatio": 0.65
+}

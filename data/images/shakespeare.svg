@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="quillGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbb954" />
+      <stop offset="100%" stop-color="#fb6b1d" />
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="54" fill="#151d28" stroke="#f79617" stroke-width="3" />
+  <path d="M85 25 C65 25 40 50 42 75 L38 90 L52 82 C70 82 90 55 85 25 Z" fill="url(#quillGrad)" />
+  <path d="M42 75 L65 52" stroke="#151d28" stroke-width="2" stroke-linecap="round" />
+  <circle cx="34" cy="94" r="3" fill="#fbb954" />
+</svg>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OverAchiever - Desktop achievements for your daily goals</title>
+  <link rel="icon" type="image/svg+xml" href="/stars-stack.svg">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/card.css">
+</head>
+<body>
+  <header>
+    <div class="brand-wrapper">
+      <img src="/stars-stack.svg" width="32" height="32" alt="OverAchiever" class="brand-badge" />
+      <div>
+        <h1 class="brand-title">OverAchiever</h1>
+        <p class="brand-subtitle">Desktop achievements for your daily goals</p>
+      </div>
+    </div>
+
+    <nav class="nav-tabs" aria-label="Views">
+      <button class="tab-btn active" data-tab="tab-checklist">Checklist</button>
+      <button class="tab-btn" data-tab="tab-editor">Create</button>
+      <button class="tab-btn" data-tab="tab-history">Streaks &amp; history</button>
+    </nav>
+
+    <div class="hamburger-container">
+      <button id="btn-hamburger" class="hamburger-btn" aria-label="Menu" aria-expanded="false" title="Menu">
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+      </button>
+      <div id="hamburger-menu" class="hamburger-menu" role="menu">
+        <div class="menu-section">
+          <span class="menu-section-label">Connect from phone</span>
+          <div class="menu-network-row">
+            <span id="menu-phone-url" class="menu-phone-url">Loading...</span>
+            <button id="btn-copy-url" class="btn-secondary btn-sm" type="button">Copy</button>
+          </div>
+        </div>
+        <div class="menu-divider"></div>
+        <div class="menu-section">
+          <button id="btn-menu-reset" class="menu-item-destructive" type="button">Reset day</button>
+          <span class="menu-item-help">Clears today's unlocked achievements</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- TAB 1: DAILY CHECKLIST -->
+    <section id="tab-checklist" class="tab-content active">
+      <div class="view-header">
+        <div class="view-header-title-group">
+          <h2 class="section-title">Today's achievements</h2>
+          <span id="current-date-badge" class="date-badge">2026-09-15</span>
+        </div>
+      </div>
+      <input id="input-search" class="form-input search-input" type="search" placeholder="Search achievements" autocomplete="off" />
+      <div id="achievements-list" class="checklist-list">
+        <!-- Rendered dynamically as list rows -->
+      </div>
+    </section>
+
+    <!-- TAB 2: ADD / EDIT CARD -->
+    <section id="tab-editor" class="tab-content">
+      <div class="editor-single-column">
+        <div class="view-header">
+          <h2 id="editor-title" class="section-title">New achievement</h2>
+        </div>
+
+        <div class="editor-preview-container">
+          <div id="live-preview-box" class="preview-box">
+            <!-- Live card rendered dynamically -->
+          </div>
+        </div>
+
+        <form id="achievement-form" class="editor-form">
+          <div class="form-group">
+            <label class="form-label" for="input-title">Title</label>
+            <input id="input-title" class="form-input" type="text" placeholder="Achievement title" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="input-description">Description</label>
+            <textarea id="input-description" class="form-textarea" rows="2" placeholder="What needs to be accomplished" required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Card artwork</label>
+            <div class="file-input-wrapper">
+              <label for="input-file" class="btn-secondary file-picker-btn">Choose icon</label>
+              <input id="input-file" class="file-input" type="file" accept="image/png, image/jpeg, image/svg+xml, image/webp" />
+              <span id="file-name-label" class="file-name-label">Choose an image (PNG, SVG, JPG)</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="select-rarity">Rarity (appearance)</label>
+            <select id="select-rarity" class="form-select">
+              <option value="basic" class="rarity-basic">Basic</option>
+              <option value="common" class="rarity-common" selected>Common</option>
+              <option value="rare" class="rarity-rare">Rare</option>
+              <option value="epic" class="rarity-epic">Epic</option>
+              <option value="legendary" class="rarity-legendary">Legendary</option>
+              <option value="mythic" class="rarity-mythic">Mythic</option>
+            </select>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" id="btn-submit-achievement" class="btn-primary">Create achievement</button>
+            <button type="button" id="btn-cancel-edit" class="btn-secondary" style="display: none;">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- TAB 3: STREAKS & HISTORY -->
+    <section id="tab-history" class="tab-content">
+      <div class="view-header">
+        <h2 class="section-title">Active streaks</h2>
+        <button id="btn-forget-history" class="btn-danger btn-sm" type="button">Forget history</button>
+      </div>
+      <div id="streaks-container" class="history-section-container"></div>
+
+      <div class="view-header" style="margin-top: 36px;">
+        <h2 class="section-title">Unlock calendar</h2>
+      </div>
+      <div id="calendar-container" class="history-section-container"></div>
+    </section>
+  </main>
+
+  <div id="toast-notification" class="toast">Operation completed</div>
+
+  <script type="module" src="/js/dashboard.bundle.js"></script>
+</body>
+</html>

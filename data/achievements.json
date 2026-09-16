@@ -1,0 +1,92 @@
+[
+  {
+    "id": "grass-toucher",
+    "title": "Grass toucher",
+    "description": "Go outside",
+    "imageFileName": "1789473373150-high-grass.svg",
+    "customCss": "#card-grass-toucher {\n  background: linear-gradient(135deg, rgba(21, 29, 40, 0.92), rgba(247, 150, 23, 0.35));\n  border: 1px solid var(--light-orange);\n  box-shadow: 0 10px 25px rgba(251, 185, 84, 0.3);\n}\n#card-grass-toucher .achievement-title {\n  color: var(--lighter-orange);\n  font-size: 1.1rem;\n  font-weight: 700;\n  letter-spacing: 0.05em;\n}\n#card-grass-toucher .achievement-description {\n  color: var(--lightest-gray);\n  font-size: 0.85rem;\n}",
+    "createdAt": "2026-09-15T00:00:00.000Z",
+    "rarity": "legendary"
+  },
+  {
+    "id": "climbing-the-ladder",
+    "title": "Climbing the ladder",
+    "description": "Work or study",
+    "imageFileName": "1789473386837-ladder.svg",
+    "customCss": "#card-climbing-the-ladder {\n  background: linear-gradient(135deg, rgba(21, 29, 40, 0.92), rgba(144, 94, 169, 0.35));\n  border: 1px solid var(--light-purple);\n  box-shadow: 0 10px 25px rgba(168, 132, 243, 0.3);\n}\n#card-climbing-the-ladder .achievement-title {\n  color: var(--lighter-purple);\n  font-size: 1.1rem;\n  font-weight: 700;\n  letter-spacing: 0.05em;\n}\n#card-climbing-the-ladder .achievement-description {\n  color: var(--lightest-gray);\n  font-size: 0.85rem;\n}",
+    "createdAt": "2026-09-15T00:00:00.000Z",
+    "rarity": "epic"
+  },
+  {
+    "id": "shakespeare",
+    "title": "Shakespeare",
+    "description": "Make progress on a book, essay or poem",
+    "imageFileName": "1789473405037-scroll-quill.svg",
+    "customCss": "#card-shakespeare {\n  background: linear-gradient(135deg, rgba(21, 29, 40, 0.92), rgba(247, 150, 23, 0.35));\n  border: 1px solid var(--light-orange);\n  box-shadow: 0 10px 25px rgba(251, 185, 84, 0.3);\n}\n#card-shakespeare .achievement-title {\n  color: var(--lighter-orange);\n  font-size: 1.1rem;\n  font-weight: 700;\n  letter-spacing: 0.05em;\n}\n#card-shakespeare .achievement-description {\n  color: var(--lightest-gray);\n  font-size: 0.85rem;\n}",
+    "createdAt": "2026-09-15T00:00:00.000Z",
+    "rarity": "legendary"
+  },
+  {
+    "id": "not-an-otaku",
+    "title": "Not an otaku",
+    "description": "Take a shower",
+    "imageFileName": "1789473429655-shower.svg",
+    "customCss": "#card-not-an-otaku {\n  background: linear-gradient(135deg, rgba(21, 29, 40, 0.92), rgba(77, 155, 230, 0.35));\n  border: 1px solid var(--light-blue);\n  box-shadow: 0 10px 25px rgba(143, 211, 255, 0.3);\n}\n#card-not-an-otaku .achievement-title {\n  color: var(--lighter-blue);\n  font-size: 1.1rem;\n  font-weight: 700;\n  letter-spacing: 0.05em;\n}\n#card-not-an-otaku .achievement-description {\n  color: var(--lightest-gray);\n  font-size: 0.85rem;\n}",
+    "createdAt": "2026-09-15T10:52:05.350Z",
+    "rarity": "rare"
+  },
+  {
+    "id": "good-child",
+    "title": "Example child",
+    "description": "Make your bed",
+    "imageFileName": "1789473443730-bed.svg",
+    "customCss": "#card-good-child {\n  background: linear-gradient(135deg, rgba(21, 29, 40, 0.92), rgba(247, 150, 23, 0.35));\n  border: 1px solid var(--light-orange);\n  box-shadow: 0 10px 25px rgba(251, 185, 84, 0.3);\n}\n#card-good-child .achievement-title {\n  color: var(--lighter-orange);\n  font-size: 1.1rem;\n  font-weight: 700;\n  letter-spacing: 0.05em;\n}\n#card-good-child .achievement-description {\n  color: var(--lightest-gray);\n  font-size: 0.85rem;\n}",
+    "createdAt": "2026-09-15T10:52:22.120Z",
+    "rarity": "legendary"
+  },
+  {
+    "id": "houseplant",
+    "title": "Houseplant",
+    "description": "Drink a full bottle of water",
+    "imageFileName": "1789473460742-water-bottle.svg",
+    "customCss": "#card-houseplant {\n  background: linear-gradient(135deg, rgba(21, 29, 40, 0.92), rgba(77, 155, 230, 0.35));\n  border: 1px solid var(--light-blue);\n  box-shadow: 0 10px 25px rgba(143, 211, 255, 0.3);\n}\n#card-houseplant .achievement-title {\n  color: var(--lighter-blue);\n  font-size: 1.1rem;\n  font-weight: 700;\n  letter-spacing: 0.05em;\n}\n#card-houseplant .achievement-description {\n  color: var(--lightest-gray);\n  font-size: 0.85rem;\n}",
+    "createdAt": "2026-09-15T10:54:05.917Z",
+    "rarity": "rare"
+  },
+  {
+    "id": "are-ya-winning-son",
+    "title": "Are ya winning son?",
+    "description": "Enjoy something spicy",
+    "imageFileName": "1789473474084-high-heel.svg",
+    "customCss": "#card-are-ya-winning-son {\n  background: linear-gradient(135deg, rgba(21, 29, 40, 0.92), rgba(144, 94, 169, 0.35));\n  border: 1px solid var(--light-purple);\n  box-shadow: 0 10px 25px rgba(168, 132, 243, 0.3);\n}\n#card-are-ya-winning-son .achievement-title {\n  color: var(--lighter-purple);\n  font-size: 1.1rem;\n  font-weight: 700;\n  letter-spacing: 0.05em;\n}\n#card-are-ya-winning-son .achievement-description {\n  color: var(--lightest-gray);\n  font-size: 0.85rem;\n}",
+    "createdAt": "2026-09-15T11:53:45.339Z",
+    "rarity": "epic"
+  },
+  {
+    "id": "gym-bro",
+    "title": "Gym bro",
+    "description": "Work out",
+    "imageFileName": "1789478482981-weight-lifting-up.svg",
+    "customCss": "#card-gym-bro {\n  background: linear-gradient(135deg, rgba(21, 29, 40, 0.92), rgba(247, 150, 23, 0.35));\n  border: 1px solid var(--light-orange);\n  box-shadow: 0 10px 25px rgba(251, 185, 84, 0.3);\n}\n#card-gym-bro .achievement-title {\n  color: var(--lighter-orange);\n  font-size: 1.1rem;\n  font-weight: 700;\n  letter-spacing: 0.05em;\n}\n#card-gym-bro .achievement-description {\n  color: var(--lightest-gray);\n  font-size: 0.85rem;\n}",
+    "createdAt": "2026-09-15T13:19:19.217Z",
+    "rarity": "legendary"
+  },
+  {
+    "id": "bookworm",
+    "title": "Bookworm",
+    "description": "Read a book",
+    "imageFileName": "1789478513803-book-cover.svg",
+    "customCss": "#card-bookworm {\n  background: linear-gradient(135deg, rgba(21, 29, 40, 0.92), rgba(144, 94, 169, 0.35));\n  border: 1px solid var(--light-purple);\n  box-shadow: 0 10px 25px rgba(168, 132, 243, 0.3);\n}\n#card-bookworm .achievement-title {\n  color: var(--lighter-purple);\n  font-size: 1.1rem;\n  font-weight: 700;\n  letter-spacing: 0.05em;\n}\n#card-bookworm .achievement-description {\n  color: var(--lightest-gray);\n  font-size: 0.85rem;\n}",
+    "createdAt": "2026-09-15T13:21:54.559Z",
+    "rarity": "epic"
+  },
+  {
+    "id": "influencer-wannabe",
+    "title": "Influencer wannabe",
+    "description": "Create something and post it",
+    "imageFileName": "1789478664924-round-star.svg",
+    "customCss": "#card-influencer-wannabe {\n  background: linear-gradient(135deg, rgba(21, 29, 40, 0.92), rgba(247, 150, 23, 0.35));\n  border: 1px solid var(--light-orange);\n  box-shadow: 0 10px 25px rgba(251, 185, 84, 0.3);\n}\n#card-influencer-wannabe .achievement-title {\n  color: var(--lighter-orange);\n  font-size: 1.1rem;\n  font-weight: 700;\n  letter-spacing: 0.05em;\n}\n#card-influencer-wannabe .achievement-description {\n  color: var(--lightest-gray);\n  font-size: 0.85rem;\n}",
+    "createdAt": "2026-09-15T13:23:43.009Z",
+    "rarity": "legendary"
+  }
+]

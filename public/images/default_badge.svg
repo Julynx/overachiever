@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="badgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbb954" />
+      <stop offset="100%" stop-color="#f04f78" />
+    </linearGradient>
+  </defs>
+  <polygon points="60,10 75,42 110,45 83,70 92,105 60,86 28,105 37,70 10,45 45,42" fill="url(#badgeGrad)" stroke="#ebede9" stroke-width="2" />
+</svg>

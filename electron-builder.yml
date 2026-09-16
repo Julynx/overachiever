@@ -1,0 +1,27 @@
+appId: com.overachiever.app
+productName: OverAchiever
+copyright: Copyright © 2026 OverAchiever
+
+directories:
+  buildResources: assets/build
+  output: release
+
+files:
+  - dist/**
+  - public/**
+  - package.json
+
+asar: true
+
+win:
+  icon: assets/build/icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+
+nsis:
+  oneClick: true
+  perMachine: false
+  deleteAppDataOnUninstall: false
+  include: assets/build/installer.nsh

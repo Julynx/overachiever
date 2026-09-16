@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="grassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#91db69" />
+      <stop offset="100%" stop-color="#239063" />
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="54" fill="#151d28" stroke="#1ebc73" stroke-width="3" />
+  <path d="M35 85 C35 60 45 45 60 30 C55 50 65 65 65 85" fill="none" stroke="url(#grassGrad)" stroke-width="6" stroke-linecap="round" />
+  <path d="M48 85 C48 65 40 52 30 42 C42 50 46 65 50 85" fill="none" stroke="url(#grassGrad)" stroke-width="5" stroke-linecap="round" />
+  <path d="M72 85 C70 65 78 52 90 40 C78 52 75 66 73 85" fill="none" stroke="url(#grassGrad)" stroke-width="5" stroke-linecap="round" />
+  <circle cx="60" cy="24" r="8" fill="#fbb954" opacity="0.9" />
+</svg>

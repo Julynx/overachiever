@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="ladderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8fd3ff" />
+      <stop offset="100%" stop-color="#4d65b4" />
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="54" fill="#151d28" stroke="#4d9be6" stroke-width="3" />
+  <line x1="45" y1="25" x2="45" y2="95" stroke="url(#ladderGrad)" stroke-width="5" stroke-linecap="round" />
+  <line x1="75" y1="25" x2="75" y2="95" stroke="url(#ladderGrad)" stroke-width="5" stroke-linecap="round" />
+  <line x1="45" y1="38" x2="75" y2="38" stroke="url(#ladderGrad)" stroke-width="4" stroke-linecap="round" />
+  <line x1="45" y1="52" x2="75" y2="52" stroke="url(#ladderGrad)" stroke-width="4" stroke-linecap="round" />
+  <line x1="45" y1="68" x2="75" y2="68" stroke="url(#ladderGrad)" stroke-width="4" stroke-linecap="round" />
+  <line x1="45" y1="82" x2="75" y2="82" stroke="url(#ladderGrad)" stroke-width="4" stroke-linecap="round" />
+  <polygon points="60,14 65,24 55,24" fill="#8fd3ff" />
+</svg>

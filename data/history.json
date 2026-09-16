@@ -1,0 +1,36 @@
+{
+  "streaks": {
+    "climbing-the-ladder": {
+      "currentStreak": 1,
+      "longestStreak": 1,
+      "lastCompletedDate": "2026-09-15"
+    },
+    "not-an-otaku": {
+      "currentStreak": 1,
+      "longestStreak": 1,
+      "lastCompletedDate": "2026-09-15"
+    },
+    "houseplant": {
+      "currentStreak": 1,
+      "longestStreak": 1,
+      "lastCompletedDate": "2026-09-15"
+    }
+  },
+  "logs": [
+    {
+      "achievementId": "houseplant",
+      "calendarDate": "2026-09-15",
+      "unlockedAt": "2026-09-15T18:10:23.513Z"
+    },
+    {
+      "achievementId": "not-an-otaku",
+      "calendarDate": "2026-09-15",
+      "unlockedAt": "2026-09-15T18:10:18.708Z"
+    },
+    {
+      "achievementId": "climbing-the-ladder",
+      "calendarDate": "2026-09-15",
+      "unlockedAt": "2026-09-15T18:10:12.417Z"
+    }
+  ]
+}

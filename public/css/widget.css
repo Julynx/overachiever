@@ -1,0 +1,169 @@
+@import url('./color_palette.css');
+@import url('./card.css');
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+  overflow: hidden;
+  user-select: none;
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  pointer-events: none;
+}
+
+#widget-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 16px;
+  pointer-events: none;
+}
+
+#cards-stack {
+  width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#progress-hud {
+  --hud-bar-height: 12px;
+  --hud-bar-radius: calc(var(--hud-bar-height) / 2);
+  --hud-bar-inset: 0px;
+  --hud-text-inset: calc(var(--hud-bar-inset) + var(--hud-bar-radius) / 2);
+  width: 520px;
+  margin-bottom: 14px;
+  pointer-events: none;
+}
+
+.hud-top-row,
+.hud-bottom-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 var(--hud-text-inset);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  color: var(--light-gray);
+  -webkit-text-stroke: 0.6px rgba(9, 10, 20, 1);
+  paint-order: stroke fill;
+  text-shadow:
+    0 1px 2px rgba(9, 10, 20, 1),
+    0 0 6px rgba(9, 10, 20, 1),
+    0 0 10px rgba(9, 10, 20, 1),
+    0 0 16px rgba(9, 10, 20, 0.95);
+}
+
+.hud-top-row {
+  position: relative;
+  top: 2px;
+}
+
+.hud-league {
+  text-transform: uppercase;
+}
+
+.hud-elo {
+  color: var(--light-gray);
+}
+
+.hud-bar-row {
+  position: relative;
+  height: 30px;
+  margin: 0;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.hud-bar-track {
+  position: absolute;
+  top: 50%;
+  left: var(--hud-bar-inset);
+  right: var(--hud-bar-inset);
+  height: var(--hud-bar-height);
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: rgba(16, 20, 31, 0.85);
+  border: 1px solid var(--dark-gray);
+}
+
+.hud-bar-fill {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: var(--hud-bar-height);
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--light-green), var(--lighter-green));
+  box-shadow: 0 0 12px rgba(145, 219, 105, 0.35);
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hud-level-medal {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 38px;
+  height: 38px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(16, 20, 31, 0.95);
+  border: 2px solid var(--lighter-gray);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(9, 10, 20, 0.7);
+}
+
+.hud-level-medal[data-tier='iron'] { border-color: var(--lighter-gray); }
+.hud-level-medal[data-tier='bronze'] { border-color: var(--dark-orange); }
+.hud-level-medal[data-tier='silver'] { border-color: var(--lighter-gray); }
+.hud-level-medal[data-tier='gold'] { border-color: var(--lighter-orange); }
+.hud-level-medal[data-tier='platinum'] { border-color: var(--lighter-blue); }
+.hud-level-medal[data-tier='diamond'] { border-color: var(--light-blue); }
+.hud-level-medal[data-tier='opal'] { border-color: var(--lighter-purple); }
+.hud-level-medal[data-tier='cinder'] { border-color: var(--lighter-red); }
+
+.hud-league-shield {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(38px * 1920 / 326);
+  height: calc(38px * 1080 / 326);
+  pointer-events: none;
+}
+
+.hud-level-number {
+  position: relative;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #090a14;
+  -webkit-text-stroke: 0.6px rgba(255, 255, 255, 1);
+  paint-order: stroke fill;
+  text-shadow: 0 1px 6px rgba(255, 255, 255, 1);
+}
+
+.cards-container-shake {
+  animation: containerImpact 0.3s ease-out;
+}
+
+@keyframes containerImpact {
+  0% { transform: translateY(0); }
+  30% { transform: translateY(2px); }
+  60% { transform: translateY(-1px); }
+  100% { transform: translateY(0); }
+}
