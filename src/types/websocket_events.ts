@@ -15,7 +15,8 @@ export type WebSocketEventType =
   | 'ACHIEVEMENT_CREATED'
   | 'ACHIEVEMENT_UPDATED'
   | 'ACHIEVEMENT_DELETED'
-  | 'HISTORY_CLEARED';
+  | 'HISTORY_CLEARED'
+  | 'DAY_HISTORY_UPDATED';
 
 export interface WebSocketMessage<T = unknown> {
   type: WebSocketEventType;
@@ -39,4 +40,9 @@ export interface RevokeEventPayload {
 
 export interface ResetEventPayload {
   newDate: string;
+}
+
+export interface DayHistoryUpdatedPayload {
+  calendarDate: string;
+  achievementIds: string[];
 }

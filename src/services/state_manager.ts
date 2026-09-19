@@ -7,7 +7,7 @@ import * as path from 'node:path';
 import { EventEmitter } from 'node:events';
 import { AchievementDefinition, CreateAchievementPayload } from '../types/achievement.js';
 import { DailyState, ActiveUnlockRecord } from '../types/state.js';
-import { HistoryStorage, StreakMetric } from '../types/history.js';
+import { HistoryStorage, StreakMetric, HistoricalLogEntry, calculateStreakMetrics } from '../types/history.js';
 import { ApplicationConfig } from '../types/config.js';
 import { generateRarityCss, inferRarityFromCss, RarityTier } from '../types/rarity.js';
 import { buildProgressSnapshot, resolveXpForRarity, ProgressSnapshot } from '../types/progress.js';
@@ -327,32 +327,28 @@ export class StateManager extends EventEmitter {
     return true;
   }
 
+  /**
+   * Recalculates streak metrics for an achievement from its recorded history logs.
+   */
+  private recomputeStreak(achievementId: string): void {
+    const completionDates = this.historyCache.logs
+      .filter((log) => log.achievementId === achievementId)
+      .map((log) => log.calendarDate);
+
+    const calculatedMetric = calculateStreakMetrics(completionDates, this.getTodayDateString());
+    if (calculatedMetric) {
+      this.historyCache.streaks[achievementId] = calculatedMetric;
+    } else {
+      delete this.historyCache.streaks[achievementId];
+    }
+  }
+
   private updateStreaksAndHistory(
     achievementId: string,
     calendarDate: string,
     unlockTimestamp: string,
     xpAwarded: number
   ): void {
-    const currentMetric: StreakMetric = this.historyCache.streaks[achievementId] || {
-      currentStreak: 0,
-      longestStreak: 0,
-      lastCompletedDate: '',
-    };
-
-    if (currentMetric.lastCompletedDate !== calendarDate) {
-      const yesterday = this.getPreviousDateString(calendarDate);
-
-      if (currentMetric.lastCompletedDate === yesterday) {
-        currentMetric.currentStreak += 1;
-      } else {
-        currentMetric.currentStreak = 1;
-      }
-
-      currentMetric.longestStreak = Math.max(currentMetric.longestStreak, currentMetric.currentStreak);
-      currentMetric.lastCompletedDate = calendarDate;
-      this.historyCache.streaks[achievementId] = currentMetric;
-    }
-
     this.historyCache.logs.unshift({
       achievementId,
       calendarDate,
@@ -360,10 +356,7 @@ export class StateManager extends EventEmitter {
       xp: xpAwarded,
     });
 
-    if (this.historyCache.logs.length > 500) {
-      this.historyCache.logs = this.historyCache.logs.slice(0, 500);
-    }
-
+    this.recomputeStreak(achievementId);
     this.saveJsonFile(this.historyFilePath, this.historyCache);
   }
 
@@ -383,34 +376,126 @@ export class StateManager extends EventEmitter {
       return;
     }
 
-    const metric = this.historyCache.streaks[achievementId];
-    if (metric) {
-      const remainingLogDates = new Set(
-        this.historyCache.logs
-          .filter((log) => log.achievementId === achievementId)
-          .map((log) => log.calendarDate)
+    this.recomputeStreak(achievementId);
+    this.saveJsonFile(this.historyFilePath, this.historyCache);
+  }
+
+  /**
+   * Modifies the full set of achievements unlocked on a specific calendar day,
+   * reconciling history logs, recalculating affected streaks, and synchronizing
+   * today's active unlocks when modifying the current date.
+   */
+  public setDayAchievements(
+    calendarDate: string,
+    desiredAchievementIds: string[]
+  ): { history: HistoryStorage; state: DailyState; progress: ProgressSnapshot } {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(calendarDate)) {
+      throw new Error(`Invalid calendar date format: "${calendarDate}". Expected YYYY-MM-DD.`);
+    }
+
+    const todayDate = this.getTodayDateString();
+    if (calendarDate > todayDate) {
+      throw new Error(`Cannot modify achievements for future date: "${calendarDate}".`);
+    }
+
+    const uniqueDesiredIds = Array.from(new Set(desiredAchievementIds));
+    for (const achievementId of uniqueDesiredIds) {
+      const exists = this.achievementsCache.some((item) => item.id === achievementId) ||
+        Boolean(this.historyCache.deletedAchievements?.[achievementId]);
+      if (!exists) {
+        throw new Error(`Achievement with identifier "${achievementId}" was not found.`);
+      }
+    }
+
+    const desiredIdSet = new Set(uniqueDesiredIds);
+    const existingLogsForDate = this.historyCache.logs.filter((log) => log.calendarDate === calendarDate);
+    const existingIdsForDate = new Set(existingLogsForDate.map((log) => log.achievementId));
+
+    const affectedAchievementIds = new Set([...existingIdsForDate, ...desiredIdSet]);
+
+    const preservedLogs = existingLogsForDate.filter((log) => desiredIdSet.has(log.achievementId));
+    const preservedIds = new Set(preservedLogs.map((log) => log.achievementId));
+
+    const newLogs: HistoricalLogEntry[] = [];
+    for (const achievementId of uniqueDesiredIds) {
+      if (!preservedIds.has(achievementId)) {
+        const liveDefinition = this.getAchievementById(achievementId);
+        const resolvedRarity = liveDefinition?.rarity ?? this.historyCache.deletedAchievements?.[achievementId]?.rarity;
+        const awardedXp = resolveXpForRarity(resolvedRarity);
+        const unlockTimestamp = calendarDate === todayDate
+          ? new Date().toISOString()
+          : `${calendarDate}T12:00:00.000Z`;
+
+        newLogs.push({
+          achievementId,
+          calendarDate,
+          unlockedAt: unlockTimestamp,
+          xp: awardedXp,
+        });
+      }
+    }
+
+    const logsFromOtherDates = this.historyCache.logs.filter((log) => log.calendarDate !== calendarDate);
+    this.historyCache.logs = [...logsFromOtherDates, ...preservedLogs, ...newLogs];
+
+    this.historyCache.logs.sort((first, second) => {
+      if (first.calendarDate !== second.calendarDate) {
+        return second.calendarDate.localeCompare(first.calendarDate);
+      }
+      return second.unlockedAt.localeCompare(first.unlockedAt);
+    });
+
+    for (const achievementId of affectedAchievementIds) {
+      this.recomputeStreak(achievementId);
+    }
+
+    this.saveJsonFile(this.historyFilePath, this.historyCache);
+
+    if (calendarDate === todayDate) {
+      const activeUnlocksMap = new Map(
+        this.stateCache.activeUnlocks.map((record) => [record.achievementId, record])
       );
 
-      if (remainingLogDates.size === 0) {
-        delete this.historyCache.streaks[achievementId];
-      } else {
-        const sortedDates = Array.from(remainingLogDates).sort();
-        metric.lastCompletedDate = sortedDates[sortedDates.length - 1];
+      const nextActiveUnlocks: ActiveUnlockRecord[] = [];
+      for (const achievementId of uniqueDesiredIds) {
+        const existingRecord = activeUnlocksMap.get(achievementId);
+        if (existingRecord) {
+          nextActiveUnlocks.push(existingRecord);
+        } else {
+          nextActiveUnlocks.push({
+            achievementId,
+            unlockedAt: new Date().toISOString(),
+          });
+        }
+      }
 
-        const yesterday = this.getPreviousDateString(todayDate);
-        if (metric.lastCompletedDate === todayDate || metric.lastCompletedDate === yesterday) {
-          let cursor = metric.lastCompletedDate;
-          let chainLength = 1;
-          while (remainingLogDates.has(this.getPreviousDateString(cursor))) {
-            cursor = this.getPreviousDateString(cursor);
-            chainLength += 1;
+      this.stateCache.activeUnlocks = nextActiveUnlocks;
+      this.saveJsonFile(this.stateFilePath, this.stateCache);
+
+      for (const achievementId of uniqueDesiredIds) {
+        if (!existingIdsForDate.has(achievementId)) {
+          const definition = this.getAchievementById(achievementId);
+          if (definition) {
+            this.emit('achievementUnlocked', { achievement: definition, unlockedAt: new Date().toISOString() });
           }
-          metric.currentStreak = chainLength;
+        }
+      }
+
+      for (const achievementId of existingIdsForDate) {
+        if (!desiredIdSet.has(achievementId)) {
+          this.emit('achievementRevoked', { achievementId });
         }
       }
     }
 
-    this.saveJsonFile(this.historyFilePath, this.historyCache);
+    this.emit('dayHistoryUpdated', { calendarDate, achievementIds: uniqueDesiredIds });
+    logger.info(`Updated history for date ${calendarDate}: ${uniqueDesiredIds.length} achievements unlocked.`);
+
+    return {
+      history: this.getHistory(),
+      state: this.getDailyState(),
+      progress: this.getProgress(),
+    };
   }
 
   public getHistory(): HistoryStorage {

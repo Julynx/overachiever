@@ -11,6 +11,7 @@ import { StateManager } from '../src/services/state_manager.js';
 import { AppServer } from '../src/server/app_server.js';
 import { FileStorageManager } from '../src/server/file_storage.js';
 import { WebSocketMessage } from '../src/types/websocket_events.js';
+import { calculateStreakMetrics } from '../src/types/history.js';
 import { computeLeagueProgress, computeLevelProgress, xpForLevelGap } from '../src/types/progress.js';
 
 async function runIntegrationTests(): Promise<void> {
@@ -284,6 +285,193 @@ async function runIntegrationTests(): Promise<void> {
 
   stateManager.deleteAchievement(testAchievement.id);
   console.log('✓ PASS: Cleaned up test achievement');
+
+  const pureMetricsActiveToday = calculateStreakMetrics(
+    ['2026-09-18', '2026-09-19', '2026-09-20'],
+    '2026-09-20'
+  );
+  if (!pureMetricsActiveToday || pureMetricsActiveToday.currentStreak !== 3 || pureMetricsActiveToday.longestStreak !== 3) {
+    throw new Error('FAILED: calculateStreakMetrics failed for active run ending today.');
+  }
+
+  const pureMetricsActiveYesterday = calculateStreakMetrics(
+    ['2026-09-18', '2026-09-19'],
+    '2026-09-20'
+  );
+  if (!pureMetricsActiveYesterday || pureMetricsActiveYesterday.currentStreak !== 2 || pureMetricsActiveYesterday.longestStreak !== 2) {
+    throw new Error('FAILED: calculateStreakMetrics failed for active run ending yesterday.');
+  }
+
+  const pureMetricsBroken = calculateStreakMetrics(
+    ['2026-09-17', '2026-09-18'],
+    '2026-09-20'
+  );
+  if (!pureMetricsBroken || pureMetricsBroken.currentStreak !== 0 || pureMetricsBroken.longestStreak !== 2) {
+    throw new Error('FAILED: calculateStreakMetrics failed for broken streak.');
+  }
+
+  const pureMetricsBridge = calculateStreakMetrics(
+    ['2026-09-16', '2026-09-17', '2026-09-18', '2026-09-19', '2026-09-20'],
+    '2026-09-20'
+  );
+  if (!pureMetricsBridge || pureMetricsBridge.currentStreak !== 5 || pureMetricsBridge.longestStreak !== 5) {
+    throw new Error('FAILED: calculateStreakMetrics failed for bridged streak.');
+  }
+  console.log('✓ PASS: Pure streak calculation engine passes all edge cases');
+
+  stateManager.forgetHistory();
+
+  const dayTestAlpha = stateManager.createAchievement({
+    title: 'Alpha Daily',
+    description: 'Alpha testing achievement for day reviews',
+    rarity: 'rare',
+  });
+  const dayTestBeta = stateManager.createAchievement({
+    title: 'Beta Daily',
+    description: 'Beta testing achievement for day reviews',
+    rarity: 'epic',
+  });
+
+  const todayDateString = stateManager.getDailyState().currentDate;
+  const yesterdayUtcDate = new Date(`${todayDateString}T00:00:00Z`);
+  yesterdayUtcDate.setUTCDate(yesterdayUtcDate.getUTCDate() - 1);
+  const yesterdayDateString = yesterdayUtcDate.toISOString().slice(0, 10);
+
+  stateManager.unlockAchievement(dayTestAlpha.id);
+  const alphaStreakBefore = stateManager.getHistory().streaks[dayTestAlpha.id]?.currentStreak;
+  if (alphaStreakBefore !== 1) {
+    throw new Error('FAILED: Alpha initial streak should be 1.');
+  }
+
+  const dayUpdateWsPromise = new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('DAY_HISTORY_UPDATED WS event timeout')), 3000);
+    const handler = (data: any) => {
+      const parsed: WebSocketMessage = JSON.parse(data.toString());
+      if (parsed.type === 'DAY_HISTORY_UPDATED') {
+        clearTimeout(timeout);
+        wsClient.off('message', handler);
+        resolve();
+      }
+    };
+    wsClient.on('message', handler);
+  });
+
+  const putPastRes = await fetch(
+    `http://127.0.0.1:${serverBinding.port}/api/history/day/${yesterdayDateString}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ achievementIds: [dayTestAlpha.id, dayTestBeta.id] }),
+    }
+  );
+  const putPastData = await putPastRes.json();
+  if (!putPastData.success) {
+    throw new Error(`FAILED: PUT /api/history/day/:pastDate failed: ${putPastData.error}`);
+  }
+  await dayUpdateWsPromise;
+  console.log('✓ PASS: PUT /api/history/day/:pastDate successfully updated history and broadcasted WebSocket event');
+
+  const historyAfterPastAdd = stateManager.getHistory();
+  const alphaStreakAfter = historyAfterPastAdd.streaks[dayTestAlpha.id];
+  const betaStreakAfter = historyAfterPastAdd.streaks[dayTestBeta.id];
+  if (!alphaStreakAfter || alphaStreakAfter.currentStreak !== 2 || alphaStreakAfter.longestStreak !== 2) {
+    throw new Error(`FAILED: Alpha streak should have bridged to 2 consecutive days, got: ${alphaStreakAfter?.currentStreak}`);
+  }
+  if (!betaStreakAfter || betaStreakAfter.currentStreak !== 1 || betaStreakAfter.longestStreak !== 1) {
+    throw new Error(`FAILED: Beta streak should be 1, got: ${betaStreakAfter?.currentStreak}`);
+  }
+  console.log('✓ PASS: Adding past unlocks bridges streaks across calendar boundaries');
+
+  const activeUnlocksForToday = stateManager.getDailyState().activeUnlocks;
+  if (activeUnlocksForToday.length !== 1 || activeUnlocksForToday[0].achievementId !== dayTestAlpha.id) {
+    throw new Error("FAILED: Modifying a past day changed today's active unlocks.");
+  }
+  console.log("✓ PASS: Modifying a past day leaves today's active unlocks untouched");
+
+  const expectedTotalXp = 2 + 2 + 4;
+  if (stateManager.getProgress().totalXp !== expectedTotalXp) {
+    throw new Error(`FAILED: Total XP mismatch after past unlocks. Expected ${expectedTotalXp}, got ${stateManager.getProgress().totalXp}`);
+  }
+  console.log('✓ PASS: Past unlocks correctly accrue XP and progression level');
+
+  const putRollbackRes = await fetch(
+    `http://127.0.0.1:${serverBinding.port}/api/history/day/${yesterdayDateString}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ achievementIds: [dayTestBeta.id] }),
+    }
+  );
+  const putRollbackData = await putRollbackRes.json();
+  if (!putRollbackData.success) {
+    throw new Error('FAILED: PUT /api/history/day/:pastDate rollback failed.');
+  }
+
+  const alphaStreakAfterRollback = stateManager.getHistory().streaks[dayTestAlpha.id];
+  if (!alphaStreakAfterRollback || alphaStreakAfterRollback.currentStreak !== 1) {
+    throw new Error(`FAILED: Alpha streak should have rolled back to 1, got: ${alphaStreakAfterRollback?.currentStreak}`);
+  }
+  console.log('✓ PASS: Removing an achievement from a past day rolls back streak correctly');
+
+  const futureDateRes = await fetch(
+    `http://127.0.0.1:${serverBinding.port}/api/history/day/2099-01-01`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ achievementIds: [dayTestAlpha.id] }),
+    }
+  );
+  if (futureDateRes.status !== 400) {
+    throw new Error(`FAILED: Setting achievements for a future date must return 400, got ${futureDateRes.status}.`);
+  }
+
+  const invalidDateFormatRes = await fetch(
+    `http://127.0.0.1:${serverBinding.port}/api/history/day/not-a-date`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ achievementIds: [dayTestAlpha.id] }),
+    }
+  );
+  if (invalidDateFormatRes.status !== 400) {
+    throw new Error(`FAILED: Setting achievements with invalid date format must return 400, got ${invalidDateFormatRes.status}.`);
+  }
+
+  const invalidPayloadRes = await fetch(
+    `http://127.0.0.1:${serverBinding.port}/api/history/day/${yesterdayDateString}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ achievementIds: 'invalid' }),
+    }
+  );
+  if (invalidPayloadRes.status !== 400) {
+    throw new Error(`FAILED: Setting achievements with non-array payload must return 400, got ${invalidPayloadRes.status}.`);
+  }
+  console.log('✓ PASS: Future dates, malformed date strings, and invalid payloads rejected with HTTP 400');
+
+  const putTodayRes = await fetch(
+    `http://127.0.0.1:${serverBinding.port}/api/history/day/${todayDateString}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ achievementIds: [dayTestBeta.id] }),
+    }
+  );
+  const putTodayData = await putTodayRes.json();
+  if (!putTodayData.success) {
+    throw new Error('FAILED: Modifying today via PUT /api/history/day/:todayDate failed.');
+  }
+
+  const todayActiveAfter = stateManager.getDailyState().activeUnlocks;
+  if (todayActiveAfter.length !== 1 || todayActiveAfter[0].achievementId !== dayTestBeta.id) {
+    throw new Error("FAILED: Modifying today did not synchronize daily active unlocks.");
+  }
+  console.log("✓ PASS: Modifying today's achievements synchronizes active unlocks and desktop widget state");
+
+  stateManager.deleteAchievement(dayTestAlpha.id);
+  stateManager.deleteAchievement(dayTestBeta.id);
+  console.log('✓ PASS: Cleaned up day review test achievements');
 
   wsClient.close();
   await appServer.stop();

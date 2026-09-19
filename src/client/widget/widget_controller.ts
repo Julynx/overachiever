@@ -221,6 +221,10 @@ export class WidgetController {
         this.refreshProgress();
         break;
       }
+      case 'DAY_HISTORY_UPDATED': {
+        this.refreshProgress();
+        break;
+      }
       default:
         break;
     }

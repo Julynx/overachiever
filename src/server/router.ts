@@ -129,6 +129,21 @@ export function createApiRouter(
     response.json({ success: true, data: history });
   });
 
+  router.put('/history/day/:date', (request: Request, response: Response, next: NextFunction) => {
+    try {
+      const date = String(request.params.date);
+      const payload = request.body;
+      if (!payload || !Array.isArray(payload.achievementIds)) {
+        response.status(400).json({ success: false, error: 'Field "achievementIds" must be an array of strings.' });
+        return;
+      }
+      const result = stateManager.setDayAchievements(date, payload.achievementIds);
+      response.json({ success: true, data: result });
+    } catch (dayUpdateError: any) {
+      response.status(400).json({ success: false, error: dayUpdateError.message });
+    }
+  });
+
   router.get('/progress', (_request: Request, response: Response) => {
     const progress = stateManager.getProgress();
     response.json({ success: true, data: progress });

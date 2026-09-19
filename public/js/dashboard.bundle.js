@@ -400,18 +400,69 @@ var MONTH_LABELS = [
 function escapeHtml(value) {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
+function formatHeaderDate(dateKey) {
+  const [yearString, monthString, dayString] = dateKey.split("-");
+  const dateInstance = new Date(Number(yearString), Number(monthString) - 1, Number(dayString));
+  return dateInstance.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "short",
+    day: "numeric"
+  });
+}
 var CalendarView = class {
   container;
   viewedYear;
   viewedMonth;
   unlocksByDate = /* @__PURE__ */ new Map();
-  constructor(container) {
+  latestHistory = { streaks: {}, logs: [] };
+  latestAchievements = [];
+  saveHandler;
+  modalBackdropElement = null;
+  activeEscapeListener = null;
+  constructor(container, onSaveDay) {
     this.container = container;
+    this.saveHandler = onSaveDay;
     const now = /* @__PURE__ */ new Date();
     this.viewedYear = now.getFullYear();
     this.viewedMonth = now.getMonth();
+    this.setupGridListeners();
+  }
+  setSaveHandler(handler) {
+    this.saveHandler = handler;
+  }
+  setupGridListeners() {
+    this.container.addEventListener("click", (event) => {
+      const target = event.target;
+      const navButton = target.closest(".calendar-nav-btn");
+      if (navButton) {
+        const direction = navButton.dataset.direction;
+        if (direction === "prev") {
+          this.shiftMonth(-1);
+        } else if (direction === "next") {
+          this.shiftMonth(1);
+        }
+        return;
+      }
+      const dayElement = target.closest(".calendar-day.is-interactive");
+      if (dayElement && dayElement.dataset.date) {
+        this.openDayModal(dayElement.dataset.date);
+      }
+    });
+    this.container.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        const target = event.target;
+        const dayElement = target.closest(".calendar-day.is-interactive");
+        if (dayElement && dayElement.dataset.date) {
+          event.preventDefault();
+          this.openDayModal(dayElement.dataset.date);
+        }
+      }
+    });
   }
   render(history, achievements) {
+    this.latestHistory = history;
+    this.latestAchievements = achievements;
     const achievementLookup = buildAchievementLookup(achievements, history.deletedAchievements);
     this.unlocksByDate = /* @__PURE__ */ new Map();
     for (const log of history.logs) {
@@ -440,13 +491,16 @@ var CalendarView = class {
       weekdayCells += `<div class="calendar-weekday">${label}</div>`;
     }
     let dayCells = "";
-    for (let padding = 0; padding < firstWeekdayIndex; padding++) {
+    for (let padding = 0; padding < firstWeekdayIndex; padding += 1) {
       dayCells += '<div class="calendar-day other-month"></div>';
     }
-    for (let day = 1; day <= daysInMonth; day++) {
+    for (let day = 1; day <= daysInMonth; day += 1) {
       const dateKey = this.formatDateKey(this.viewedYear, this.viewedMonth, day);
       const dayEntries = this.unlocksByDate.get(dateKey) ?? [];
       const isToday = dateKey === todayKey ? " is-today" : "";
+      const isFuture = dateKey > todayKey;
+      const interactiveClass = isFuture ? " is-future" : " is-interactive";
+      const accessibilityAttributes = isFuture ? "" : ` tabindex="0" role="button" aria-label="Review achievements for ${dateKey}"`;
       let dots = "";
       let tooltipEntries = "";
       for (const entry of dayEntries) {
@@ -456,7 +510,7 @@ var CalendarView = class {
       }
       const tooltip = dayEntries.length > 0 ? `<div class="calendar-tooltip">${tooltipEntries}</div>` : "";
       dayCells += `
-        <div class="calendar-day${isToday}">
+        <div class="calendar-day${isToday}${interactiveClass}" data-date="${dateKey}"${accessibilityAttributes}>
           <span class="calendar-day-number">${day}</span>
           <div class="calendar-dots">${dots}</div>
           ${tooltip}
@@ -474,10 +528,6 @@ var CalendarView = class {
         ${dayCells}
       </div>
     `;
-    const previousButton = this.container.querySelector('[data-direction="prev"]');
-    const nextButton = this.container.querySelector('[data-direction="next"]');
-    previousButton.addEventListener("click", () => this.shiftMonth(-1));
-    nextButton.addEventListener("click", () => this.shiftMonth(1));
   }
   shiftMonth(delta) {
     const shifted = new Date(this.viewedYear, this.viewedMonth + delta, 1);
@@ -487,6 +537,155 @@ var CalendarView = class {
   }
   formatDateKey(year, monthIndex, day) {
     return `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  }
+  ensureModalElement() {
+    if (!this.modalBackdropElement) {
+      let element = document.getElementById("day-review-modal");
+      if (!element) {
+        element = document.createElement("div");
+        element.id = "day-review-modal";
+        element.className = "day-modal-backdrop";
+        element.setAttribute("role", "dialog");
+        element.setAttribute("aria-modal", "true");
+        document.body.appendChild(element);
+      }
+      this.modalBackdropElement = element;
+    }
+    return this.modalBackdropElement;
+  }
+  openDayModal(calendarDate) {
+    const modalBackdrop = this.ensureModalElement();
+    const unlockedIdsOnDate = new Set(
+      this.latestHistory.logs.filter((log) => log.calendarDate === calendarDate).map((log) => log.achievementId)
+    );
+    const activeIds = new Set(this.latestAchievements.map((item) => item.id));
+    const itemsToReview = this.latestAchievements.map((item) => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      imageFileName: item.imageFileName,
+      rarity: item.rarity,
+      isChecked: unlockedIdsOnDate.has(item.id)
+    }));
+    const deletedTombstones = this.latestHistory.deletedAchievements ?? {};
+    for (const unlockedId of unlockedIdsOnDate) {
+      if (!activeIds.has(unlockedId)) {
+        const tombstone = deletedTombstones[unlockedId];
+        itemsToReview.push({
+          id: unlockedId,
+          title: tombstone ? `${tombstone.title} (archived)` : `${unlockedId} (archived)`,
+          description: "Achievement definition no longer in the active checklist.",
+          imageFileName: "default_badge.svg",
+          rarity: tombstone?.rarity,
+          isChecked: true
+        });
+      }
+    }
+    const workingSelections = new Set(unlockedIdsOnDate);
+    let rowsHtml = "";
+    if (itemsToReview.length === 0) {
+      rowsHtml = '<p class="empty-state-text">No achievements defined in the checklist view.</p>';
+    } else {
+      for (const item of itemsToReview) {
+        const checkedAttribute = workingSelections.has(item.id) ? "checked" : "";
+        const rowCheckedClass = workingSelections.has(item.id) ? " checked" : "";
+        const rarityClass = ` rarity-${item.rarity || "common"}`;
+        rowsHtml += `
+          <label class="day-modal-row${rowCheckedClass}" data-id="${item.id}">
+            <input type="checkbox" class="day-modal-checkbox" data-id="${item.id}" ${checkedAttribute} />
+            <img class="day-modal-thumb" src="/images/${escapeHtml(item.imageFileName)}" alt="${escapeHtml(item.title)}" />
+            <div class="day-modal-info">
+              <span class="day-modal-row-title${rarityClass}">${escapeHtml(item.title)}</span>
+              <span class="day-modal-row-desc">${escapeHtml(item.description)}</span>
+            </div>
+          </label>
+        `;
+      }
+    }
+    modalBackdrop.innerHTML = `
+      <div class="day-modal-dialog">
+        <div class="day-modal-header">
+          <div class="day-modal-title-group">
+            <h3 class="day-modal-title">${escapeHtml(formatHeaderDate(calendarDate))}</h3>
+            <span class="day-modal-badge" id="day-modal-counter">${workingSelections.size} of ${itemsToReview.length} completed</span>
+          </div>
+          <button type="button" class="day-modal-close-btn" aria-label="Close dialog">&times;</button>
+        </div>
+        <div class="day-modal-body" id="day-modal-list">
+          ${rowsHtml}
+        </div>
+        <div class="day-modal-footer">
+          <button type="button" class="btn-secondary day-modal-btn-cancel">Cancel</button>
+          <button type="button" class="btn-primary day-modal-btn-save">Save</button>
+        </div>
+      </div>
+    `;
+    const counterElement = modalBackdrop.querySelector("#day-modal-counter");
+    const updateCounterDisplay = () => {
+      if (counterElement) {
+        counterElement.textContent = `${workingSelections.size} of ${itemsToReview.length} completed`;
+      }
+    };
+    const rowsListElement = modalBackdrop.querySelector("#day-modal-list");
+    rowsListElement.addEventListener("change", (event) => {
+      const checkbox = event.target;
+      if (checkbox && checkbox.classList.contains("day-modal-checkbox")) {
+        const achievementId = checkbox.dataset.id;
+        if (achievementId) {
+          if (checkbox.checked) {
+            workingSelections.add(achievementId);
+          } else {
+            workingSelections.delete(achievementId);
+          }
+          const parentRow = checkbox.closest(".day-modal-row");
+          parentRow?.classList.toggle("checked", checkbox.checked);
+          updateCounterDisplay();
+        }
+      }
+    });
+    const closeButton = modalBackdrop.querySelector(".day-modal-close-btn");
+    const cancelButton = modalBackdrop.querySelector(".day-modal-btn-cancel");
+    const saveButton = modalBackdrop.querySelector(".day-modal-btn-save");
+    closeButton.addEventListener("click", () => this.closeDayModal());
+    cancelButton.addEventListener("click", () => this.closeDayModal());
+    modalBackdrop.addEventListener("click", (event) => {
+      if (event.target === modalBackdrop) {
+        this.closeDayModal();
+      }
+    });
+    saveButton.addEventListener("click", async () => {
+      saveButton.disabled = true;
+      saveButton.textContent = "Saving...";
+      try {
+        if (this.saveHandler) {
+          await this.saveHandler(calendarDate, Array.from(workingSelections));
+        }
+        this.closeDayModal();
+      } catch (saveError) {
+        saveButton.disabled = false;
+        saveButton.textContent = "Save";
+        alert(`Error saving day achievements: ${saveError instanceof Error ? saveError.message : String(saveError)}`);
+      }
+    });
+    if (this.activeEscapeListener) {
+      document.removeEventListener("keydown", this.activeEscapeListener);
+    }
+    this.activeEscapeListener = (event) => {
+      if (event.key === "Escape") {
+        this.closeDayModal();
+      }
+    };
+    document.addEventListener("keydown", this.activeEscapeListener);
+    modalBackdrop.classList.add("open");
+  }
+  closeDayModal() {
+    if (this.modalBackdropElement) {
+      this.modalBackdropElement.classList.remove("open");
+    }
+    if (this.activeEscapeListener) {
+      document.removeEventListener("keydown", this.activeEscapeListener);
+      this.activeEscapeListener = null;
+    }
   }
 };
 
@@ -518,7 +717,10 @@ var DashboardController = class {
     const streaksContainerEl = document.getElementById("streaks-container");
     const calendarContainerEl = document.getElementById("calendar-container");
     this.streakRenderer = new StreakViewRenderer(streaksContainerEl);
-    this.calendarView = new CalendarView(calendarContainerEl);
+    this.calendarView = new CalendarView(
+      calendarContainerEl,
+      (calendarDate, achievementIds) => this.handleSaveDayAchievements(calendarDate, achievementIds)
+    );
     this.formHandler = new AchievementFormHandler(
       formEl,
       previewBoxEl,
@@ -746,7 +948,8 @@ var DashboardController = class {
       case "ACHIEVEMENT_CREATED":
       case "ACHIEVEMENT_UPDATED":
       case "ACHIEVEMENT_DELETED":
-      case "HISTORY_CLEARED": {
+      case "HISTORY_CLEARED":
+      case "DAY_HISTORY_UPDATED": {
         this.fetchState();
         break;
       }
@@ -864,6 +1067,19 @@ var DashboardController = class {
     } catch (deleteError) {
       alert(`Delete error: ${deleteError.message}`);
     }
+  }
+  async handleSaveDayAchievements(calendarDate, desiredAchievementIds) {
+    const response = await fetch(`/api/history/day/${calendarDate}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ achievementIds: desiredAchievementIds })
+    });
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || "Failed to update day achievements.");
+    }
+    this.showToast(`Updated achievements for ${calendarDate}.`);
+    await this.fetchState();
   }
   showToast(message) {
     if (!this.toastEl) {

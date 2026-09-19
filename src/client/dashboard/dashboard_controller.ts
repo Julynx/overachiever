@@ -44,7 +44,9 @@ export class DashboardController {
     const calendarContainerEl = document.getElementById('calendar-container') as HTMLElement;
 
     this.streakRenderer = new StreakViewRenderer(streaksContainerEl);
-    this.calendarView = new CalendarView(calendarContainerEl);
+    this.calendarView = new CalendarView(calendarContainerEl, (calendarDate, achievementIds) =>
+      this.handleSaveDayAchievements(calendarDate, achievementIds)
+    );
 
     this.formHandler = new AchievementFormHandler(
       formEl,
@@ -309,7 +311,8 @@ export class DashboardController {
       case 'ACHIEVEMENT_CREATED':
       case 'ACHIEVEMENT_UPDATED':
       case 'ACHIEVEMENT_DELETED':
-      case 'HISTORY_CLEARED': {
+      case 'HISTORY_CLEARED':
+      case 'DAY_HISTORY_UPDATED': {
         this.fetchState();
         break;
       }
@@ -457,6 +460,25 @@ export class DashboardController {
     } catch (deleteError: any) {
       alert(`Delete error: ${deleteError.message}`);
     }
+  }
+
+  private async handleSaveDayAchievements(
+    calendarDate: string,
+    desiredAchievementIds: string[]
+  ): Promise<void> {
+    const response = await fetch(`/api/history/day/${calendarDate}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ achievementIds: desiredAchievementIds }),
+    });
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to update day achievements.');
+    }
+
+    this.showToast(`Updated achievements for ${calendarDate}.`);
+    await this.fetchState();
   }
 
   private showToast(message: string): void {

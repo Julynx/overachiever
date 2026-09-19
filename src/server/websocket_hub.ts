@@ -72,6 +72,10 @@ export class WebSocketHub {
     this.stateManager.on('historyCleared', () => {
       this.broadcast('HISTORY_CLEARED', {});
     });
+
+    this.stateManager.on('dayHistoryUpdated', (payload) => {
+      this.broadcast('DAY_HISTORY_UPDATED', payload);
+    });
   }
 
   public broadcast<T>(type: WebSocketEventType, payload: T): void {

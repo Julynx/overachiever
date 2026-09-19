@@ -1,5 +1,23 @@
 {
-  "streaks": {},
-  "logs": [],
-  "deletedAchievements": {}
+  "streaks": {
+    "beta-daily": {
+      "currentStreak": 1,
+      "longestStreak": 1,
+      "lastCompletedDate": "2026-09-19"
+    }
+  },
+  "logs": [
+    {
+      "achievementId": "beta-daily",
+      "calendarDate": "2026-09-19",
+      "unlockedAt": "2026-09-19T12:00:00.000Z",
+      "xp": 4
+    }
+  ],
+  "deletedAchievements": {
+    "beta-daily": {
+      "title": "Beta Daily",
+      "rarity": "epic"
+    }
+  }
 }
